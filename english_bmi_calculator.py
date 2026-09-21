@@ -1,9 +1,11 @@
-"""English / Imperial Body Mass Index (BMI) Calculator.
+"""Bilingual (English & Bahasa Indonesia) BMI / IMT Calculator Script.
+Kalkulator Indeks Massa Tubuh (IMT / BMI) Bilingual (Bahasa Inggris & Bahasa Indonesia).
 
-Calculates BMI using the English / Imperial measurement system:
-    BMI = (weight_in_lbs * 703) / (height_in_inches ** 2)
-
-Supports both interactive command-line prompts and direct CLI arguments.
+Supports:
+- Two languages: English & Bahasa Indonesia
+- Two measurement systems: Metric (kg, cm/m) & Imperial/English (lbs, ft/in)
+- Interactive console prompt & Command-Line Arguments
+- Healthy weight range calculation in corresponding units
 """
 
 from __future__ import annotations
@@ -13,204 +15,300 @@ import sys
 from typing import Tuple
 
 
+TRANSLATIONS = {
+    "en": {
+        "title": "BMI CALCULATOR (BODY MASS INDEX)",
+        "select_lang": "Select Language / Pilih Bahasa:",
+        "lang_option_en": "1. English",
+        "lang_option_id": "2. Bahasa Indonesia",
+        "prompt_lang": "Enter choice (1 or 2) [default: 1]: ",
+        "select_unit": "Select Unit System:",
+        "metric_option": "1. Metric (kilograms, meters / centimeters)",
+        "imperial_option": "2. Imperial / English (pounds, feet and inches)",
+        "prompt_unit": "Enter choice (1 or 2) [default: 1]: ",
+        "prompt_weight_lbs": "Enter weight in pounds (lbs): ",
+        "prompt_height_ft": "Enter height (feet): ",
+        "prompt_height_in": "Enter remaining height (inches): ",
+        "prompt_weight_kg": "Enter weight in kilograms (kg): ",
+        "prompt_height_metric": "Enter height (in meters e.g. 1.75, or cm e.g. 175): ",
+        "invalid_number": "Error: Please enter a valid positive number.",
+        "negative_error": "Value must be strictly greater than zero.",
+        "results_title": "BMI CALCULATION RESULTS",
+        "height_label": "Height",
+        "weight_label": "Weight",
+        "bmi_label": "BMI Value",
+        "category_label": "Category",
+        "healthy_range_label": "Healthy weight range for this height",
+        "cat_underweight": "Underweight (< 18.5)",
+        "cat_normal": "Normal weight (18.5 - 24.9)",
+        "cat_overweight": "Overweight (25.0 - 29.9)",
+        "cat_obese1": "Obesity Class 1 - Moderate (30.0 - 34.9)",
+        "cat_obese2": "Obesity Class 2 - Severe (35.0 - 39.9)",
+        "cat_obese3": "Obesity Class 3 - Very severe / Morbid (>= 40.0)",
+    },
+    "id": {
+        "title": "KALKULATOR IMT / BMI (INDEKS MASSA TUBUH)",
+        "select_lang": "Pilih Bahasa / Select Language:",
+        "lang_option_en": "1. English",
+        "lang_option_id": "2. Bahasa Indonesia",
+        "prompt_lang": "Masukkan pilihan (1 atau 2) [standar: 2]: ",
+        "select_unit": "Pilih Sistem Satuan:",
+        "metric_option": "1. Metrik (kilogram, meter / sentimeter)",
+        "imperial_option": "2. Imperial / English (pon/lbs, kaki/feet dan inci)",
+        "prompt_unit": "Masukkan pilihan (1 atau 2) [standar: 1]: ",
+        "prompt_weight_lbs": "Masukkan berat badan dalam pon (lbs): ",
+        "prompt_height_ft": "Masukkan tinggi badan (kaki / feet): ",
+        "prompt_height_in": "Masukkan sisa tinggi badan (inci / inches): ",
+        "prompt_weight_kg": "Masukkan berat badan dalam kilogram (kg): ",
+        "prompt_height_metric": "Masukkan tinggi badan (dalam meter contoh: 1.75, atau cm contoh: 175): ",
+        "invalid_number": "Kesalahan: Harap masukkan angka positif yang valid.",
+        "negative_error": "Nilai harus lebih besar dari nol.",
+        "results_title": "HASIL PERHITUNGAN IMT / BMI",
+        "height_label": "Tinggi Badan",
+        "weight_label": "Berat Badan",
+        "bmi_label": "Nilai IMT / BMI",
+        "category_label": "Kategori",
+        "healthy_range_label": "Rentang berat badan sehat untuk tinggi ini",
+        "cat_underweight": "Berat Badan Kurang / Kurus (< 18.5)",
+        "cat_normal": "Berat Badan Normal / Ideal (18.5 - 24.9)",
+        "cat_overweight": "Berat Badan Berlebih (25.0 - 29.9)",
+        "cat_obese1": "Obesitas Tingkat 1 - Sedang (30.0 - 34.9)",
+        "cat_obese2": "Obesitas Tingkat 2 - Berat (35.0 - 39.9)",
+        "cat_obese3": "Obesitas Tingkat 3 - Sangat Berat / Morbid (>= 40.0)",
+    },
+}
+
+
+def calculate_bmi_metric(weight_kg: float, height_m: float) -> float:
+    """Calculate BMI using metric units (kg, meters)."""
+    if height_m <= 0:
+        raise ValueError("Height must be greater than zero.")
+    if weight_kg <= 0:
+        raise ValueError("Weight must be greater than zero.")
+    return weight_kg / (height_m ** 2)
+
+
 def calculate_bmi_english(weight_lbs: float, height_inches: float) -> float:
-    """Calculate BMI using English / Imperial units (weight in lbs, height in inches).
-
-    Formula:
-        BMI = (weight_lbs * 703) / (height_inches ** 2)
-
-    Args:
-        weight_lbs: Body weight in pounds (lbs).
-        height_inches: Total height in inches.
-
-    Returns:
-        The calculated BMI as a float.
-
-    Raises:
-        ValueError: If weight_lbs or height_inches is not strictly positive.
-    """
+    """Calculate BMI using English / Imperial units (lbs, inches)."""
     if height_inches <= 0:
         raise ValueError("Height must be greater than zero.")
     if weight_lbs <= 0:
         raise ValueError("Weight must be greater than zero.")
-
     return (weight_lbs * 703.0) / (height_inches ** 2)
 
 
-def get_bmi_category(bmi: float) -> str:
-    """Return the standard CDC / WHO BMI weight status category.
-
-    Categories:
-        - Below 18.5: Underweight
-        - 18.5 - 24.9: Normal weight
-        - 25.0 - 29.9: Overweight
-        - 30.0 - 34.9: Obesity (Class 1 - Moderate)
-        - 35.0 - 39.9: Obesity (Class 2 - Severe)
-        - 40.0 and above: Obesity (Class 3 - Very severe / Morbid)
-
-    Args:
-        bmi: The Body Mass Index value.
-
-    Returns:
-        The category name as a string.
-    """
+def get_bmi_category(bmi: float, lang: str = "en") -> str:
+    """Return the standard WHO / Kemenkes BMI category for a given BMI in selected language."""
+    t = TRANSLATIONS.get(lang, TRANSLATIONS["en"])
     if bmi < 18.5:
-        return "Underweight"
+        return t["cat_underweight"]
     elif bmi < 25.0:
-        return "Normal weight"
+        return t["cat_normal"]
     elif bmi < 30.0:
-        return "Overweight"
+        return t["cat_overweight"]
     elif bmi < 35.0:
-        return "Obesity (Class 1 - Moderate)"
+        return t["cat_obese1"]
     elif bmi < 40.0:
-        return "Obesity (Class 2 - Severe)"
+        return t["cat_obese2"]
     else:
-        return "Obesity (Class 3 - Very severe / Morbid)"
+        return t["cat_obese3"]
+
+
+def get_healthy_weight_range_metric(height_m: float) -> Tuple[float, float]:
+    """Calculate healthy weight range (BMI 18.5 - 24.9) in kilograms."""
+    if height_m <= 0:
+        raise ValueError("Height must be greater than zero.")
+    return 18.5 * (height_m ** 2), 24.9 * (height_m ** 2)
 
 
 def get_healthy_weight_range_english(height_inches: float) -> Tuple[float, float]:
-    """Calculate the healthy weight range (BMI 18.5 to 24.9) in pounds for a given height in inches.
-
-    Args:
-        height_inches: Total height in inches.
-
-    Returns:
-        A tuple of (min_weight_lbs, max_weight_lbs).
-    """
+    """Calculate healthy weight range (BMI 18.5 - 24.9) in pounds."""
     if height_inches <= 0:
         raise ValueError("Height must be greater than zero.")
-
-    min_weight = (18.5 * (height_inches ** 2)) / 703.0
-    max_weight = (24.9 * (height_inches ** 2)) / 703.0
-    return min_weight, max_weight
+    return (18.5 * (height_inches ** 2)) / 703.0, (24.9 * (height_inches ** 2)) / 703.0
 
 
-def display_results(weight_lbs: float, height_inches: float, bmi: float) -> None:
-    """Print formatted summary of the BMI calculation and health category."""
+def display_results_metric(weight_kg: float, height_m: float, bmi: float, lang: str = "en") -> None:
+    """Display calculation results for metric units."""
+    t = TRANSLATIONS[lang]
+    category = get_bmi_category(bmi, lang=lang)
+    min_w, max_w = get_healthy_weight_range_metric(height_m)
+
+    print("\n" + "=" * 55)
+    print(f"       {t['results_title']}")
+    print("=" * 55)
+    print(f"  {t['height_label']:<15}: {height_m:.2f} m ({height_m * 100:.1f} cm)")
+    print(f"  {t['weight_label']:<15}: {weight_kg:.1f} kg")
+    print(f"  {t['bmi_label']:<15}: {bmi:.2f}")
+    print(f"  {t['category_label']:<15}: {category}")
+    print(f"  {t['healthy_range_label']}: {min_w:.1f} kg - {max_w:.1f} kg")
+    print("=" * 55)
+
+
+def display_results_english(weight_lbs: float, height_inches: float, bmi: float, lang: str = "en") -> None:
+    """Display calculation results for English / imperial units."""
+    t = TRANSLATIONS[lang]
     feet = int(height_inches // 12)
     inches = height_inches % 12
-    category = get_bmi_category(bmi)
-    min_weight, max_weight = get_healthy_weight_range_english(height_inches)
+    category = get_bmi_category(bmi, lang=lang)
+    min_w, max_w = get_healthy_weight_range_english(height_inches)
 
-    print("\n" + "=" * 50)
-    print("           ENGLISH BMI CALCULATION REPORT")
-    print("=" * 50)
+    print("\n" + "=" * 55)
+    print(f"       {t['results_title']}")
+    print("=" * 55)
     if feet > 0:
-        print(f"  Height       : {feet} ft {inches:.1f} in ({height_inches:.1f} inches)")
+        print(f"  {t['height_label']:<15}: {feet} ft {inches:.1f} in ({height_inches:.1f} in)")
     else:
-        print(f"  Height       : {height_inches:.1f} inches")
-    print(f"  Weight       : {weight_lbs:.1f} lbs")
-    print(f"  BMI Value    : {bmi:.2f}")
-    print(f"  Category     : {category}")
-    print(f"  Healthy Range: {min_weight:.1f} lbs - {max_weight:.1f} lbs")
-    print("=" * 50)
+        print(f"  {t['height_label']:<15}: {height_inches:.1f} in")
+    print(f"  {t['weight_label']:<15}: {weight_lbs:.1f} lbs")
+    print(f"  {t['bmi_label']:<15}: {bmi:.2f}")
+    print(f"  {t['category_label']:<15}: {category}")
+    print(f"  {t['healthy_range_label']}: {min_w:.1f} lbs - {max_w:.1f} lbs")
+    print("=" * 55)
 
 
-def prompt_positive_float(prompt_text: str) -> float:
-    """Prompt the user for a numeric float value greater than zero."""
+def prompt_positive_float(prompt_text: str, err_text: str) -> float:
+    """Prompt user repeatedly until a positive float is provided."""
     while True:
         raw_val = input(prompt_text).strip()
         try:
             val = float(raw_val)
             if val <= 0:
-                print("  [!] Please enter a positive number greater than 0.")
+                print(f"  [!] {err_text}")
                 continue
             return val
         except ValueError:
-            print("  [!] Invalid input. Please enter a valid number.")
+            print(f"  [!] {err_text}")
 
 
-def run_interactive() -> None:
-    """Run an interactive console prompt for English BMI calculation."""
-    print("=" * 50)
-    print("        ENGLISH / IMPERIAL BMI CALCULATOR")
-    print("=" * 50)
-    print("How would you like to enter your height?")
-    print("  1. Feet and inches (e.g., 5 ft 10 in)")
-    print("  2. Total inches (e.g., 70 in)")
-    
-    height_choice = input("\nEnter choice (1 or 2) [default: 1]: ").strip()
-    if height_choice == "2":
-        height_inches = prompt_positive_float("Enter height in inches: ")
+def run_interactive(lang: str | None = None) -> None:
+    """Interactive session supporting language and unit selection."""
+    if not lang or lang not in TRANSLATIONS:
+        print("=" * 55)
+        print("  Select Language / Pilih Bahasa:")
+        print("    1. English")
+        print("    2. Bahasa Indonesia")
+        choice = input("\n  Enter choice / Masukkan pilihan (1 or 2) [default: 1]: ").strip()
+        lang = "id" if choice == "2" else "en"
+
+    t = TRANSLATIONS[lang]
+
+    print("\n" + "=" * 55)
+    print(f"        {t['title']}")
+    print("=" * 55)
+    print(f"  {t['select_unit']}")
+    print(f"    {t['metric_option']}")
+    print(f"    {t['imperial_option']}")
+
+    default_choice = "2" if lang == "id" and False else "1"
+    unit_choice = input(f"\n  {t['prompt_unit']}").strip() or default_choice
+
+    if unit_choice == "2":
+        # Imperial / English Units
+        try:
+            weight_lbs = prompt_positive_float(f"  {t['prompt_weight_lbs']}", t["invalid_number"])
+            while True:
+                try:
+                    feet_input = input(f"  {t['prompt_height_ft']}").strip()
+                    feet = float(feet_input)
+                    if feet < 0:
+                        print(f"  [!] {t['invalid_number']}")
+                        continue
+
+                    inches_input = input(f"  {t['prompt_height_in']}").strip()
+                    inches = float(inches_input)
+                    if inches < 0:
+                        print(f"  [!] {t['invalid_number']}")
+                        continue
+
+                    total_inches = (feet * 12.0) + inches
+                    if total_inches <= 0:
+                        print(f"  [!] {t['invalid_number']}")
+                        continue
+                    break
+                except ValueError:
+                    print(f"  [!] {t['invalid_number']}")
+
+            bmi = calculate_bmi_english(weight_lbs, total_inches)
+            display_results_english(weight_lbs, total_inches, bmi, lang=lang)
+        except (ValueError, KeyboardInterrupt):
+            print(f"\n{t['invalid_number']}")
     else:
-        while True:
-            try:
-                raw_feet = input("Enter height (feet): ").strip()
-                feet = float(raw_feet)
-                if feet < 0:
-                    print("  [!] Feet cannot be negative.")
-                    continue
+        # Metric Units
+        try:
+            weight_kg = prompt_positive_float(f"  {t['prompt_weight_kg']}", t["invalid_number"])
+            height_input = prompt_positive_float(f"  {t['prompt_height_metric']}", t["invalid_number"])
+            # If height entered is > 3, assume centimeters (e.g. 175 cm -> 1.75 m)
+            height_m = height_input / 100.0 if height_input > 3.0 else height_input
 
-                raw_inches = input("Enter remaining height (inches): ").strip()
-                inches = float(raw_inches)
-                if inches < 0:
-                    print("  [!] Inches cannot be negative.")
-                    continue
-
-                total_inches = feet * 12.0 + inches
-                if total_inches <= 0:
-                    print("  [!] Total height must be greater than zero.")
-                    continue
-                height_inches = total_inches
-                break
-            except ValueError:
-                print("  [!] Please enter valid numerical values.")
-
-    weight_lbs = prompt_positive_float("Enter weight in pounds (lbs): ")
-
-    bmi = calculate_bmi_english(weight_lbs=weight_lbs, height_inches=height_inches)
-    display_results(weight_lbs=weight_lbs, height_inches=height_inches, bmi=bmi)
+            bmi = calculate_bmi_metric(weight_kg, height_m)
+            display_results_metric(weight_kg, height_m, bmi, lang=lang)
+        except (ValueError, KeyboardInterrupt):
+            print(f"\n{t['invalid_number']}")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="English / Imperial Body Mass Index (BMI) Calculator.",
-        epilog="Example: python english_bmi_calculator.py --weight 160 --feet 5 --inches 10",
+        description="Bilingual BMI / IMT Calculator (English & Bahasa Indonesia).",
+        epilog="Examples:\n"
+               "  python english_bmi_calculator.py --lang id\n"
+               "  python english_bmi_calculator.py --lang en --weight 160 --feet 5 --inches 10 --imperial\n"
+               "  python english_bmi_calculator.py --lang id --weight 70 --height 175\n",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--lang",
+        choices=["en", "id"],
+        help="Language preference: 'en' for English, 'id' for Bahasa Indonesia",
     )
     parser.add_argument(
         "-w", "--weight",
         type=float,
-        help="Weight in pounds (lbs).",
+        help="Body weight (kg by default, or lbs if --imperial is passed)",
+    )
+    parser.add_argument(
+        "-H", "--height",
+        type=float,
+        help="Height (in meters or cm if > 3; in inches if --imperial is passed)",
     )
     parser.add_argument(
         "--feet",
         type=float,
         default=0.0,
-        help="Height component in feet.",
+        help="Height feet component (for imperial)",
     )
     parser.add_argument(
         "--inches",
         type=float,
         default=0.0,
-        help="Height component in inches (added to --feet).",
+        help="Height inches component (added to --feet for imperial)",
     )
     parser.add_argument(
-        "-i", "--total-inches",
-        type=float,
-        help="Total height in inches (alternative to specifying feet and inches).",
+        "--imperial",
+        action="store_true",
+        help="Use English / Imperial units (pounds and inches)",
     )
 
     args = parser.parse_args()
+    lang = args.lang if args.lang else "en"
 
-    # If weight is provided via CLI arguments
     if args.weight is not None:
-        if args.total_inches is not None:
-            height_inches = args.total_inches
+        if args.imperial:
+            height_in = args.height if args.height is not None else ((args.feet * 12.0) + args.inches)
+            if height_in <= 0:
+                print("Error: Height must be greater than zero.", file=sys.stderr)
+                sys.exit(1)
+            bmi = calculate_bmi_english(args.weight, height_in)
+            display_results_english(args.weight, height_in, bmi, lang=lang)
         else:
-            height_inches = (args.feet * 12.0) + args.inches
-
-        if height_inches <= 0:
-            print("Error: Height must be greater than zero (use --total-inches or --feet/--inches).", file=sys.stderr)
-            sys.exit(1)
-
-        try:
-            bmi = calculate_bmi_english(args.weight, height_inches)
-            display_results(args.weight, height_inches, bmi)
-        except ValueError as err:
-            print(f"Error: {err}", file=sys.stderr)
-            sys.exit(1)
+            if args.height is None or args.height <= 0:
+                print("Error: Height must be specified and greater than zero.", file=sys.stderr)
+                sys.exit(1)
+            height_m = args.height / 100.0 if args.height > 3.0 else args.height
+            bmi = calculate_bmi_metric(args.weight, height_m)
+            display_results_metric(args.weight, height_m, bmi, lang=lang)
     else:
-        run_interactive()
+        run_interactive(lang=args.lang)
 
 
 if __name__ == "__main__":
