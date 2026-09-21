@@ -1,4 +1,4 @@
-"""Unit tests for bilingual BMI calculator functions."""
+"""Unit tests for multilingual (English, Indonesian, Japanese) BMI calculator functions."""
 
 import unittest
 from english_bmi_calculator import (
@@ -10,7 +10,7 @@ from english_bmi_calculator import (
 )
 
 
-class TestBilingualBMICalculator(unittest.TestCase):
+class TestMultilingualBMICalculator(unittest.TestCase):
     def test_calculate_bmi_english(self):
         # 160 lbs, 70 inches -> (160 * 703) / 4900 = 22.955...
         bmi = calculate_bmi_english(160, 70)
@@ -23,6 +23,7 @@ class TestBilingualBMICalculator(unittest.TestCase):
         self.assertAlmostEqual(bmi, 22.86, places=2)
         self.assertIn("Normal", get_bmi_category(bmi, lang="en"))
         self.assertIn("Normal", get_bmi_category(bmi, lang="id"))
+        self.assertIn("普通体重", get_bmi_category(bmi, lang="ja"))
 
     def test_categories_english(self):
         self.assertIn("Underweight", get_bmi_category(16.0, lang="en"))
@@ -39,6 +40,14 @@ class TestBilingualBMICalculator(unittest.TestCase):
         self.assertIn("Tingkat 1", get_bmi_category(32.0, lang="id"))
         self.assertIn("Tingkat 2", get_bmi_category(36.0, lang="id"))
         self.assertIn("Tingkat 3", get_bmi_category(42.0, lang="id"))
+
+    def test_categories_japanese(self):
+        self.assertIn("低体重", get_bmi_category(16.0, lang="ja"))
+        self.assertIn("普通体重", get_bmi_category(22.0, lang="ja"))
+        self.assertIn("肥満（1度）", get_bmi_category(27.5, lang="ja"))
+        self.assertIn("肥満（2度）", get_bmi_category(32.0, lang="ja"))
+        self.assertIn("肥満（3度）", get_bmi_category(36.0, lang="ja"))
+        self.assertIn("肥満（4度", get_bmi_category(42.0, lang="ja"))
 
     def test_healthy_weight_ranges(self):
         # Metric: 1.75 m

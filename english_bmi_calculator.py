@@ -1,8 +1,9 @@
-"""Bilingual (English & Bahasa Indonesia) BMI / IMT Calculator Script.
-Kalkulator Indeks Massa Tubuh (IMT / BMI) Bilingual (Bahasa Inggris & Bahasa Indonesia).
+"""Multilingual BMI / IMT Calculator Script (English, Bahasa Indonesia, 日本語).
+Kalkulator Indeks Massa Tubuh (IMT / BMI) Multibahasa.
+多言語対応 BMI（体格指数）計算スクリプト。
 
 Supports:
-- Two languages: English & Bahasa Indonesia
+- Three languages: English, Bahasa Indonesia, and 日本語 (Japanese)
 - Two measurement systems: Metric (kg, cm/m) & Imperial/English (lbs, ft/in)
 - Interactive console prompt & Command-Line Arguments
 - Healthy weight range calculation in corresponding units
@@ -14,14 +15,23 @@ import argparse
 import sys
 from typing import Tuple
 
+# Ensure stdout and stderr handle UTF-8 properly on Windows consoles
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 
 TRANSLATIONS = {
     "en": {
         "title": "BMI CALCULATOR (BODY MASS INDEX)",
-        "select_lang": "Select Language / Pilih Bahasa:",
+        "select_lang": "Select Language / Pilih Bahasa / 言語を選択:",
         "lang_option_en": "1. English",
         "lang_option_id": "2. Bahasa Indonesia",
-        "prompt_lang": "Enter choice (1 or 2) [default: 1]: ",
+        "lang_option_ja": "3. 日本語 (Japanese)",
+        "prompt_lang": "Enter choice (1, 2, or 3) [default: 1]: ",
         "select_unit": "Select Unit System:",
         "metric_option": "1. Metric (kilograms, meters / centimeters)",
         "imperial_option": "2. Imperial / English (pounds, feet and inches)",
@@ -48,10 +58,11 @@ TRANSLATIONS = {
     },
     "id": {
         "title": "KALKULATOR IMT / BMI (INDEKS MASSA TUBUH)",
-        "select_lang": "Pilih Bahasa / Select Language:",
+        "select_lang": "Pilih Bahasa / Select Language / 言語を選択:",
         "lang_option_en": "1. English",
         "lang_option_id": "2. Bahasa Indonesia",
-        "prompt_lang": "Masukkan pilihan (1 atau 2) [standar: 2]: ",
+        "lang_option_ja": "3. 日本語 (Japanese)",
+        "prompt_lang": "Masukkan pilihan (1, 2, atau 3) [standar: 2]: ",
         "select_unit": "Pilih Sistem Satuan:",
         "metric_option": "1. Metrik (kilogram, meter / sentimeter)",
         "imperial_option": "2. Imperial / English (pon/lbs, kaki/feet dan inci)",
@@ -76,6 +87,37 @@ TRANSLATIONS = {
         "cat_obese2": "Obesitas Tingkat 2 - Berat (35.0 - 39.9)",
         "cat_obese3": "Obesitas Tingkat 3 - Sangat Berat / Morbid (>= 40.0)",
     },
+    "ja": {
+        "title": "BMI 計算機（体格指数）",
+        "select_lang": "言語を選択してください / Select Language / Pilih Bahasa:",
+        "lang_option_en": "1. English (英語)",
+        "lang_option_id": "2. Bahasa Indonesia (インドネシア語)",
+        "lang_option_ja": "3. 日本語 (Japanese)",
+        "prompt_lang": "番号を入力してください (1, 2, または 3) [初期値: 3]: ",
+        "select_unit": "単位系を選択してください:",
+        "metric_option": "1. メートル法 (キログラム, メートル / センチメートル)",
+        "imperial_option": "2. ヤード・ポンド法 (ポンド, フィート / インチ)",
+        "prompt_unit": "番号を入力してください (1 または 2) [初期値: 1]: ",
+        "prompt_weight_lbs": "体重を入力してください (ポンド / lbs): ",
+        "prompt_height_ft": "身長を入力してください (フィート / ft): ",
+        "prompt_height_in": "残りの身長を入力してください (インチ / in): ",
+        "prompt_weight_kg": "体重を入力してください (キログラム / kg): ",
+        "prompt_height_metric": "身長を入力してください (メートル 例: 1.75、またはセンチメートル 例: 175): ",
+        "invalid_number": "エラー: 有効な正の数値を入力してください。",
+        "negative_error": "値は0より大きい必要があります。",
+        "results_title": "BMI 計算結果",
+        "height_label": "身長",
+        "weight_label": "体重",
+        "bmi_label": "BMI値",
+        "category_label": "判定結果",
+        "healthy_range_label": "適正体重範囲（普通体重）",
+        "cat_underweight": "低体重（やせ型） (< 18.5)",
+        "cat_normal": "普通体重（適正体重） (18.5 - 24.9)",
+        "cat_overweight": "肥満（1度） / 過体重 (25.0 - 29.9)",
+        "cat_obese1": "肥満（2度） / 中度肥満 (30.0 - 34.9)",
+        "cat_obese2": "肥満（3度） / 重度肥満 (35.0 - 39.9)",
+        "cat_obese3": "肥満（4度 / 高度肥満） (>= 40.0)",
+    },
 }
 
 
@@ -98,7 +140,7 @@ def calculate_bmi_english(weight_lbs: float, height_inches: float) -> float:
 
 
 def get_bmi_category(bmi: float, lang: str = "en") -> str:
-    """Return the standard WHO / Kemenkes BMI category for a given BMI in selected language."""
+    """Return the BMI category for a given BMI in the selected language."""
     t = TRANSLATIONS.get(lang, TRANSLATIONS["en"])
     if bmi < 18.5:
         return t["cat_underweight"]
@@ -185,11 +227,17 @@ def run_interactive(lang: str | None = None) -> None:
     """Interactive session supporting language and unit selection."""
     if not lang or lang not in TRANSLATIONS:
         print("=" * 55)
-        print("  Select Language / Pilih Bahasa:")
+        print("  Select Language / Pilih Bahasa / 言語を選択:")
         print("    1. English")
         print("    2. Bahasa Indonesia")
-        choice = input("\n  Enter choice / Masukkan pilihan (1 or 2) [default: 1]: ").strip()
-        lang = "id" if choice == "2" else "en"
+        print("    3. 日本語 (Japanese)")
+        choice = input("\n  Enter choice / 選択 (1, 2, 3) [default: 1]: ").strip()
+        if choice == "3":
+            lang = "ja"
+        elif choice == "2":
+            lang = "id"
+        else:
+            lang = "en"
 
     t = TRANSLATIONS[lang]
 
@@ -200,8 +248,7 @@ def run_interactive(lang: str | None = None) -> None:
     print(f"    {t['metric_option']}")
     print(f"    {t['imperial_option']}")
 
-    default_choice = "2" if lang == "id" and False else "1"
-    unit_choice = input(f"\n  {t['prompt_unit']}").strip() or default_choice
+    unit_choice = input(f"\n  {t['prompt_unit']}").strip() or "1"
 
     if unit_choice == "2":
         # Imperial / English Units
@@ -249,17 +296,17 @@ def run_interactive(lang: str | None = None) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Bilingual BMI / IMT Calculator (English & Bahasa Indonesia).",
+        description="Multilingual BMI / IMT Calculator (English, Bahasa Indonesia, 日本語).",
         epilog="Examples:\n"
-               "  python english_bmi_calculator.py --lang id\n"
-               "  python english_bmi_calculator.py --lang en --weight 160 --feet 5 --inches 10 --imperial\n"
-               "  python english_bmi_calculator.py --lang id --weight 70 --height 175\n",
+               "  python english_bmi_calculator.py --lang ja\n"
+               "  python english_bmi_calculator.py --lang ja --weight 65 --height 170\n"
+               "  python english_bmi_calculator.py --lang en --weight 160 --feet 5 --inches 10 --imperial\n",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
         "--lang",
-        choices=["en", "id"],
-        help="Language preference: 'en' for English, 'id' for Bahasa Indonesia",
+        choices=["en", "id", "ja"],
+        help="Language preference: 'en' for English, 'id' for Indonesian, 'ja' for Japanese",
     )
     parser.add_argument(
         "-w", "--weight",
